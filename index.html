@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sonnencreme-Rechner</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --border: #e9ecef;
+      --text: #212529;
+      --muted: #6c757d;
+      --accent: #f59e0b;
+      --accent-light: #fef3c7;
+      --accent-dark: #d97706;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      padding: 24px 16px 48px;
+    }
+
+    .container { max-width: 520px; margin: 0 auto; }
+
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 { font-size: 1.75rem; font-weight: 700; letter-spacing: -.5px; }
+    header h1 span { color: var(--accent-dark); }
+    header p { color: var(--muted); margin-top: 6px; font-size: .9rem; }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: .75rem;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    /* UV Badge */
+    .uv-row { display: flex; align-items: center; gap: 16px; }
+    .uv-badge {
+      width: 72px; height: 72px; border-radius: 50%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-weight: 700; flex-shrink: 0;
+      transition: background .3s, color .3s;
+    }
+    .uv-badge .uv-num { font-size: 1.6rem; line-height: 1; }
+    .uv-badge .uv-label { font-size: .6rem; letter-spacing: .05em; text-transform: uppercase; margin-top: 2px; }
+    .uv-info h2 { font-size: 1.1rem; font-weight: 600; }
+    .uv-info p { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+
+    .uv-low    { background: #dcfce7; color: #15803d; }
+    .uv-mod    { background: #fef9c3; color: #a16207; }
+    .uv-high   { background: #fed7aa; color: #c2410c; }
+    .uv-vhigh  { background: #fecaca; color: #b91c1c; }
+    .uv-extreme{ background: #ede9fe; color: #6d28d9; }
+
+    /* Form */
+    .field { margin-bottom: 16px; }
+    .field:last-child { margin-bottom: 0; }
+    label { display: block; font-size: .85rem; font-weight: 500; margin-bottom: 6px; }
+    select, input[type=range] { width: 100%; }
+    select {
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      font-size: .9rem;
+      color: var(--text);
+      appearance: none;
+      cursor: pointer;
+    }
+    select:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+    .slider-row { display: flex; align-items: center; gap: 12px; }
+    input[type=range] {
+      flex: 1;
+      accent-color: var(--accent-dark);
+      cursor: pointer;
+    }
+    .slider-val {
+      min-width: 40px; text-align: right;
+      font-weight: 600; font-size: .9rem;
+      color: var(--accent-dark);
+    }
+
+    /* Results */
+    .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .result-item {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+    .result-item .val {
+      font-size: 1.5rem; font-weight: 700; color: var(--accent-dark);
+      line-height: 1;
+    }
+    .result-item .unit { font-size: .7rem; color: var(--muted); margin-top: 2px; }
+    .result-item .desc { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+
+    /* Timeline */
+    .timeline { list-style: none; }
+    .timeline li {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: .87rem;
+    }
+    .timeline li:last-child { border-bottom: none; }
+    .tl-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+    }
+    .tl-time { font-weight: 600; min-width: 50px; }
+    .tl-desc { color: var(--muted); }
+
+    /* Tip box */
+    .tip {
+      background: var(--accent-light);
+      border-left: 3px solid var(--accent-dark);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: .84rem;
+      color: #78350f;
+      margin-top: 8px;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      padding: 11px 20px; border-radius: 8px; border: none;
+      font-size: .9rem; font-weight: 600; cursor: pointer;
+      transition: opacity .15s;
+    }
+    .btn:hover { opacity: .85; }
+    .btn-primary { background: var(--accent-dark); color: #fff; width: 100%; }
+    .btn-sm { padding: 7px 14px; font-size: .82rem; }
+    .btn-outline {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text); font-size: .82rem;
+    }
+
+    .location-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .location-row input {
+      flex: 1; min-width: 140px;
+      padding: 9px 12px; border: 1px solid var(--border);
+      border-radius: 8px; background: var(--bg);
+      font-size: .88rem; color: var(--text);
+    }
+    .location-row input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+    .status {
+      font-size: .82rem; color: var(--muted); margin-top: 8px;
+      min-height: 18px;
+    }
+    .status.error { color: var(--danger); }
+    .status.ok { color: var(--success); }
+
+    .hidden { display: none !important; }
+
+    footer {
+      text-align: center; margin-top: 24px;
+      font-size: .75rem; color: var(--muted);
+    }
+    footer a { color: var(--muted); }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <h1>&#9728;&#65039; Sonnencreme-<span>Rechner</span></h1>
+    <p>Wie viel Sonnenschutz brauchst du heute?</p>
+  </header>
+
+  <!-- Standort -->
+  <div class="card">
+    <div class="card-title">Standort & UV-Index</div>
+    <div class="location-row">
+      <input type="text" id="cityInput" placeholder="Stadt eingeben (z.B. Berlin)" />
+      <button class="btn btn-outline btn-sm" id="gpsBtn">&#128205; GPS</button>
+      <button class="btn btn-sm" style="background:var(--accent-dark);color:#fff;" id="searchBtn">Suchen</button>
+    </div>
+    <div class="status" id="locationStatus">Standort eingeben oder GPS nutzen.</div>
+
+    <div id="uvSection" class="hidden" style="margin-top:16px;">
+      <div class="uv-row">
+        <div class="uv-badge uv-mod" id="uvBadge">
+          <span class="uv-num" id="uvNum">—</span>
+          <span class="uv-label">UV</span>
+        </div>
+        <div class="uv-info">
+          <h2 id="uvDesc">—</h2>
+          <p id="uvSub">—</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Einstellungen -->
+  <div class="card">
+    <div class="card-title">Deine Angaben</div>
+
+    <div class="field">
+      <label for="skinType">Hauttyp</label>
+      <select id="skinType">
+        <option value="1">Typ I — sehr hell, immer Sonnenbrand, nie gebräunt</option>
+        <option value="2">Typ II — hell, meist Sonnenbrand, selten gebräunt</option>
+        <option value="3" selected>Typ III — mittel, manchmal Sonnenbrand, wird gebräunt</option>
+        <option value="4">Typ IV — olivfarben, selten Sonnenbrand, gut gebräunt</option>
+        <option value="5">Typ V — dunkel, kaum Sonnenbrand</option>
+        <option value="6">Typ VI — sehr dunkel, kein Sonnenbrand</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="spf">LSF (Lichtschutzfaktor)</label>
+      <select id="spf">
+        <option value="15">LSF 15</option>
+        <option value="20">LSF 20</option>
+        <option value="30" selected>LSF 30</option>
+        <option value="50">LSF 50</option>
+        <option value="50+">LSF 50+</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="coverage">Bedeckte Körperfläche</label>
+      <div class="slider-row">
+        <input type="range" id="coverage" min="10" max="100" value="70" step="5" />
+        <span class="slider-val" id="coverageVal">70%</span>
+      </div>
+      <div style="font-size:.77rem;color:var(--muted);margin-top:4px;">
+        T-Shirt &amp; Shorts ≈ 30% | Badeanzug ≈ 80% | Alles ≈ 100%
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="outdoorHours">Geplante Stunden draußen</label>
+      <div class="slider-row">
+        <input type="range" id="outdoorHours" min="1" max="12" value="4" step="1" />
+        <span class="slider-val" id="hoursVal">4 h</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Button -->
+  <button class="btn btn-primary" id="calcBtn">Berechnen</button>
+
+  <!-- Ergebnis -->
+  <div id="resultSection" class="hidden">
+
+    <div class="card" style="margin-top:16px;">
+      <div class="card-title">Ergebnis</div>
+      <div class="result-grid">
+        <div class="result-item">
+          <div class="val" id="resFirst">—</div>
+          <div class="unit">ml</div>
+          <div class="desc">Jetzt auftragen</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="resInterval">—</div>
+          <div class="unit">Stunden</div>
+          <div class="desc">Nachauftragen alle</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="resApplications">—</div>
+          <div class="unit">mal</div>
+          <div class="desc">Anwendungen heute</div>
+        </div>
+        <div class="result-item">
+          <div class="val" id="resTotal">—</div>
+          <div class="unit">ml gesamt</div>
+          <div class="desc">Tagesbedarf</div>
+        </div>
+      </div>
+      <div class="tip" id="resTip"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Auftrag-Zeitplan ab jetzt</div>
+      <ul class="timeline" id="timeline"></ul>
+    </div>
+
+  </div>
+
+  <footer>
+    UV-Daten: <a href="https://open-meteo.com/" target="_blank">Open-Meteo</a> &mdash;
+    Empfehlungen basieren auf WHO-Richtlinien (2 mg/cm²)
+  </footer>
+
+</div>
+
+<script>
+  // ---------- State ----------
+  let currentUV = null;
+  let currentLat = null;
+  let currentLon = null;
+
+  // ---------- Elements ----------
+  const gpsBtn       = document.getElementById('gpsBtn');
+  const searchBtn    = document.getElementById('searchBtn');
+  const cityInput    = document.getElementById('cityInput');
+  const locationStatus = document.getElementById('locationStatus');
+  const uvSection    = document.getElementById('uvSection');
+  const uvBadge      = document.getElementById('uvBadge');
+  const uvNum        = document.getElementById('uvNum');
+  const uvDesc       = document.getElementById('uvDesc');
+  const uvSub        = document.getElementById('uvSub');
+  const calcBtn      = document.getElementById('calcBtn');
+  const resultSection= document.getElementById('resultSection');
+  const coverageSlider = document.getElementById('coverage');
+  const coverageVal  = document.getElementById('coverageVal');
+  const hoursSlider  = document.getElementById('outdoorHours');
+  const hoursVal     = document.getElementById('hoursVal');
+
+  // ---------- Sliders ----------
+  coverageSlider.addEventListener('input', () => {
+    coverageVal.textContent = coverageSlider.value + '%';
+  });
+  hoursSlider.addEventListener('input', () => {
+    hoursVal.textContent = hoursSlider.value + ' h';
+  });
+
+  // ---------- UV helpers ----------
+  function uvClass(uv) {
+    if (uv < 3)  return 'uv-low';
+    if (uv < 6)  return 'uv-mod';
+    if (uv < 8)  return 'uv-high';
+    if (uv < 11) return 'uv-vhigh';
+    return 'uv-extreme';
+  }
+  function uvDescription(uv) {
+    if (uv < 3)  return ['Niedrig', 'Kein besonderer Schutz nötig.'];
+    if (uv < 6)  return ['Mäßig', 'Sonnencreme empfohlen.'];
+    if (uv < 8)  return ['Hoch', 'Sonnenschutz notwendig!'];
+    if (uv < 11) return ['Sehr hoch', 'Starker Schutz unbedingt nötig!'];
+    return ['Extrem', 'Aufenthalt im Freien meiden!'];
+  }
+  function showUV(uv) {
+    currentUV = uv;
+    uvBadge.className = 'uv-badge ' + uvClass(uv);
+    uvNum.textContent = uv.toFixed(1);
+    const [desc, sub] = uvDescription(uv);
+    uvDesc.textContent = desc;
+    uvSub.textContent  = sub;
+    uvSection.classList.remove('hidden');
+  }
+
+  // ---------- Fetch UV from Open-Meteo ----------
+  async function fetchUV(lat, lon) {
+    setStatus('Lade UV-Index…', '');
+    try {
+      const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=uv_index&forecast_days=1&timezone=auto`;
+      const res  = await fetch(url);
+      if (!res.ok) throw new Error('API-Fehler');
+      const data = await res.json();
+      // Pick the hour closest to now
+      const now  = new Date();
+      const hours = data.hourly.time.map(t => new Date(t));
+      let idx = 0;
+      let minDiff = Infinity;
+      hours.forEach((h, i) => {
+        const diff = Math.abs(h - now);
+        if (diff < minDiff) { minDiff = diff; idx = i; }
+      });
+      const uv = data.hourly.uv_index[idx];
+      showUV(uv);
+      setStatus(`UV-Index für ${now.toLocaleTimeString('de-DE', {hour:'2-digit',minute:'2-digit'})} Uhr geladen.`, 'ok');
+    } catch (e) {
+      setStatus('UV-Daten konnten nicht geladen werden: ' + e.message, 'error');
+    }
+  }
+
+  // ---------- Geocoding (Nominatim) ----------
+  async function geocodeCity(city) {
+    setStatus('Suche Ort…', '');
+    try {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`;
+      const res  = await fetch(url, { headers: { 'Accept-Language': 'de' } });
+      const data = await res.json();
+      if (!data.length) { setStatus('Ort nicht gefunden.', 'error'); return; }
+      currentLat = parseFloat(data[0].lat);
+      currentLon = parseFloat(data[0].lon);
+      const name = data[0].display_name.split(',')[0];
+      setStatus(`Ort gefunden: ${name}`, 'ok');
+      await fetchUV(currentLat, currentLon);
+    } catch (e) {
+      setStatus('Geocoding-Fehler: ' + e.message, 'error');
+    }
+  }
+
+  function setStatus(msg, type) {
+    locationStatus.textContent = msg;
+    locationStatus.className = 'status' + (type ? ' ' + type : '');
+  }
+
+  // ---------- GPS ----------
+  gpsBtn.addEventListener('click', () => {
+    if (!navigator.geolocation) {
+      setStatus('GPS nicht verfügbar.', 'error'); return;
+    }
+    setStatus('GPS wird abgerufen…', '');
+    navigator.geolocation.getCurrentPosition(
+      async pos => {
+        currentLat = pos.coords.latitude;
+        currentLon = pos.coords.longitude;
+        setStatus(`GPS: ${currentLat.toFixed(3)}, ${currentLon.toFixed(3)}`, 'ok');
+        await fetchUV(currentLat, currentLon);
+      },
+      err => setStatus('GPS-Fehler: ' + err.message, 'error')
+    );
+  });
+
+  // ---------- City search ----------
+  searchBtn.addEventListener('click', () => {
+    const city = cityInput.value.trim();
+    if (!city) { setStatus('Bitte Stadt eingeben.', 'error'); return; }
+    geocodeCity(city);
+  });
+  cityInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') searchBtn.click();
+  });
+
+  // ---------- Calculation ----------
+  calcBtn.addEventListener('click', () => {
+    if (currentUV === null) {
+      setStatus('Bitte zuerst Standort laden.', 'error'); return;
+    }
+
+    const skinType    = parseInt(document.getElementById('skinType').value);
+    const spfRaw      = document.getElementById('spf').value;
+    const spf         = spfRaw === '50+' ? 60 : parseInt(spfRaw);
+    const coverage    = parseInt(coverageSlider.value) / 100;
+    const hours       = parseInt(hoursSlider.value);
+
+    // Average body surface area ~1.73 m² = 17300 cm²
+    // Recommendation: 2 mg/cm²
+    const bodySurface = 17300; // cm²
+    const exposedArea = bodySurface * coverage;
+    const mlPerApp    = (exposedArea * 2) / 1000; // mg → g ≈ ml (density ~1)
+
+    // Reapplication interval: base 2h, reduced at high UV, adjusted by skin type
+    const uvFactor      = Math.max(0.5, 1 - (currentUV - 3) * 0.05);
+    const skinFactor    = [0.7, 0.8, 1.0, 1.2, 1.4, 1.5][skinType - 1];
+    const intervalHours = Math.max(1, Math.round(2 * uvFactor * skinFactor * 10) / 10);
+
+    const applications  = 1 + Math.ceil(hours / intervalHours);
+    const totalMl       = Math.round(mlPerApp * applications);
+
+    document.getElementById('resFirst').textContent        = mlPerApp.toFixed(1);
+    document.getElementById('resInterval').textContent     = intervalHours.toFixed(1);
+    document.getElementById('resApplications').textContent = applications;
+    document.getElementById('resTotal').textContent        = totalMl;
+
+    // Tip
+    let tip = '';
+    if (currentUV >= 8) {
+      tip = '⚠️ Sehr hoher UV-Index! Mittagssonne (11–15 Uhr) meiden, Schatten suchen, Kleidung und Hut tragen.';
+    } else if (currentUV >= 6) {
+      tip = 'Sonnenschutz regelmäßig erneuern, besonders nach dem Schwimmen oder Schwitzen.';
+    } else if (skinType <= 2) {
+      tip = 'Dein heller Hauttyp braucht auch bei niedrigem UV konsequenten Schutz.';
+    } else {
+      tip = 'Sonnencreme auch an bewölkten Tagen auftragen — UV-Strahlen dringen durch Wolken.';
+    }
+    document.getElementById('resTip').textContent = tip;
+
+    // Timeline
+    const timeline = document.getElementById('timeline');
+    timeline.innerHTML = '';
+    const now = new Date();
+    for (let i = 0; i < applications; i++) {
+      const t = new Date(now.getTime() + i * intervalHours * 3600 * 1000);
+      const timeStr = t.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <span class="tl-dot"></span>
+        <span class="tl-time">${timeStr}</span>
+        <span class="tl-desc">${i === 0 ? 'Erste Anwendung' : i === applications - 1 ? 'Letzte Anwendung' : 'Nachauftragen'} — ${mlPerApp.toFixed(1)} ml</span>
+      `;
+      timeline.appendChild(li);
+    }
+
+    resultSection.classList.remove('hidden');
+    resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+</script>
+</body>
+</html>
