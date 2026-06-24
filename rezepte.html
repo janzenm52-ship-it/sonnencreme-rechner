@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ninja Creamy Rezepte</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f9fa;
+      --card: #ffffff;
+      --border: #e9ecef;
+      --text: #212529;
+      --muted: #6c757d;
+      --accent: #818cf8;
+      --accent-light: #eef2ff;
+      --accent-dark: #4f46e5;
+      --sidebar-w: 220px;
+      --radius: 12px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.06);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0;
+      padding: 24px 0 32px;
+      z-index: 100;
+    }
+    .sidebar-brand {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .sidebar-brand .logo {
+      font-size: 1.1rem; font-weight: 700; letter-spacing: -.3px;
+      display: flex; align-items: center; gap: 8px;
+      color: var(--text); text-decoration: none;
+    }
+    .sidebar-brand .logo-icon {
+      width: 32px; height: 32px; border-radius: 8px;
+      background: #eef2ff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+    }
+    .sidebar-brand p { font-size: .72rem; color: var(--muted); margin-top: 4px; padding-left: 40px; }
+
+    .nav-section { padding: 8px 12px 4px; }
+    .nav-section-label {
+      font-size: .67rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+      padding: 0 8px; margin-bottom: 4px;
+    }
+    .nav-link {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 8px; border-radius: 8px;
+      text-decoration: none; color: var(--text);
+      font-size: .88rem; font-weight: 500;
+      transition: background .12s;
+    }
+    .nav-link:hover { background: var(--bg); }
+    .nav-link.active { background: var(--accent-light); color: var(--accent-dark); font-weight: 600; }
+    .nav-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+    /* ── Main ── */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 32px 24px 56px; }
+    .content { max-width: 720px; margin: 0 auto; }
+
+    header { margin-bottom: 28px; }
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -.4px; }
+    header h1 span { color: var(--accent-dark); }
+    header p { color: var(--muted); margin-top: 5px; font-size: .88rem; }
+
+    /* ── Filter ── */
+    .filter-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+      background: var(--card); font-size: .82rem; font-weight: 500;
+      cursor: pointer; transition: all .12s; color: var(--text);
+    }
+    .filter-btn:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .filter-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent-dark); font-weight: 600; }
+
+    /* ── Rezept-Grid ── */
+    .recipe-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+
+    .recipe-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow .15s, transform .15s;
+    }
+    .recipe-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,.12); transform: translateY(-2px); }
+
+    .recipe-emoji {
+      font-size: 2.5rem;
+      background: var(--accent-light);
+      height: 90px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .recipe-body { padding: 16px; }
+    .recipe-name { font-weight: 700; font-size: 1rem; margin-bottom: 4px; }
+    .recipe-sub { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+
+    .recipe-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .tag {
+      font-size: .7rem; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+      background: var(--accent-light); color: var(--accent-dark);
+    }
+    .tag.green { background: #dcfce7; color: #15803d; }
+    .tag.orange { background: #ffedd5; color: #c2410c; }
+    .tag.pink { background: #fce7f3; color: #9d174d; }
+    .tag.yellow { background: #fef9c3; color: #a16207; }
+
+    .recipe-meta {
+      display: flex; gap: 16px;
+      font-size: .78rem; color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: 10px; margin-top: 4px;
+    }
+    .recipe-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* ── Modal ── */
+    .modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,.4); z-index: 200;
+      align-items: center; justify-content: center;
+      padding: 16px;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal {
+      background: var(--card); border-radius: var(--radius);
+      max-width: 540px; width: 100%; max-height: 90vh;
+      overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,.2);
+    }
+    .modal-header {
+      font-size: 2rem; background: var(--accent-light);
+      height: 100px; display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 12px; right: 12px;
+      background: rgba(255,255,255,.8); border: none; border-radius: 50%;
+      width: 32px; height: 32px; cursor: pointer; font-size: 1rem;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .modal-body { padding: 24px; }
+    .modal-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+    .modal-sub { color: var(--muted); font-size: .85rem; margin-bottom: 16px; }
+
+    .modal-section { margin-bottom: 20px; }
+    .modal-section h3 {
+      font-size: .72rem; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted); margin-bottom: 10px;
+    }
+    .ingredients { list-style: none; }
+    .ingredients li {
+      display: flex; justify-content: space-between;
+      padding: 7px 0; border-bottom: 1px solid var(--border);
+      font-size: .88rem;
+    }
+    .ingredients li:last-child { border-bottom: none; }
+    .ingredients .amount { font-weight: 600; color: var(--accent-dark); }
+
+    .steps { list-style: none; counter-reset: steps; }
+    .steps li {
+      counter-increment: steps;
+      display: flex; gap: 12px; padding: 8px 0;
+      font-size: .88rem; line-height: 1.5;
+    }
+    .steps li::before {
+      content: counter(steps);
+      min-width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent-light); color: var(--accent-dark);
+      font-weight: 700; font-size: .78rem;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+
+    .tip-box {
+      background: var(--accent-light); border-left: 3px solid var(--accent-dark);
+      border-radius: 6px; padding: 12px 14px;
+      font-size: .84rem; color: #3730a3; margin-top: 4px;
+    }
+
+    footer { text-align: center; margin-top: 32px; font-size: .75rem; color: var(--muted); }
+
+    @media (max-width: 640px) {
+      .sidebar { width: 100%; min-height: auto; position: relative; flex-direction: column; border-right: none; border-bottom: 1px solid var(--border); padding: 16px 0 8px; }
+      .sidebar-brand { padding-bottom: 12px; }
+      .nav-section { display: flex; gap: 4px; padding: 8px 12px; }
+      .nav-section-label { display: none; }
+      body { flex-direction: column; }
+      .main { margin-left: 0; padding: 16px 12px 48px; }
+      .recipe-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">🌞</span>
+      Meine Tools
+    </a>
+    <p>Kleine Helfer fürs Leben</p>
+  </div>
+  <div class="nav-section">
+    <div class="nav-section-label">Tools</div>
+    <a href="index.html" class="nav-link">
+      <span class="nav-icon">☀️</span>
+      Sonnencreme-Rechner
+    </a>
+    <a href="rezepte.html" class="nav-link active">
+      <span class="nav-icon">🍦</span>
+      Ninja Creamy Rezepte
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hauptinhalt ── -->
+<main class="main">
+<div class="content">
+
+  <header>
+    <h1>🍦 Ninja Creamy <span>Rezepte</span></h1>
+    <p>Meine liebsten Eis-Kreationen für die Ninja Creamy</p>
+  </header>
+
+  <div class="filter-row" id="filterRow">
+    <button class="filter-btn active" data-filter="alle">Alle</button>
+    <button class="filter-btn" data-filter="eis">🍨 Eis</button>
+    <button class="filter-btn" data-filter="sorbet">🍧 Sorbet</button>
+    <button class="filter-btn" data-filter="protein">💪 Protein</button>
+    <button class="filter-btn" data-filter="vegan">🌱 Vegan</button>
+  </div>
+
+  <div class="recipe-grid" id="recipeGrid"></div>
+
+  <footer>Ninja Creamy ist eine eingetragene Marke von SharkNinja &mdash; Rezepte zur privaten Nutzung</footer>
+
+</div>
+</main>
+
+<!-- ── Modal ── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <div class="modal-header" id="modalEmoji"></div>
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const RECIPES = [
+  {
+    id: 1,
+    name: 'Klassisches Vanille-Eis',
+    sub: 'Cremig, reich & einfach',
+    emoji: '🍦',
+    tags: ['eis'],
+    tagLabels: [{ label: 'Klassiker', cls: 'yellow' }],
+    time: '10 Min',
+    gefrier: '24 h',
+    portionen: '2–3',
+    zutaten: [
+      { name: 'Vollmilch', menge: '240 ml' },
+      { name: 'Sahne (30% Fett)', menge: '120 ml' },
+      { name: 'Zucker', menge: '80 g' },
+      { name: 'Vanillezucker', menge: '1 Päckchen' },
+      { name: 'Prise Salz', menge: '1' },
+    ],
+    schritte: [
+      'Alle Zutaten in einer Schüssel verrühren, bis sich der Zucker aufgelöst hat.',
+      'Mischung in den Ninja Creamy Behälter füllen — max. Füllhöhe beachten.',
+      'Mindestens 24 Stunden bei -18 °C einfrieren.',
+      'Behälter in die Maschine einsetzen und Programm "Ice Cream" starten.',
+      'Bei Bedarf einmal "Re-Spin" laufen lassen für extra Cremigkeit.',
+    ],
+    tipp: 'Für noch mehr Aroma: echte Vanilleschote aufschlitzen und das Mark einrühren.',
+  },
+  {
+    id: 2,
+    name: 'Erdbeer-Sorbet',
+    sub: 'Fruchtig, leicht & erfrischend',
+    emoji: '🍓',
+    tags: ['sorbet', 'vegan'],
+    tagLabels: [{ label: 'Sorbet', cls: '' }, { label: 'Vegan', cls: 'green' }],
+    time: '10 Min',
+    gefrier: '24 h',
+    portionen: '2',
+    zutaten: [
+      { name: 'Erdbeeren (frisch oder TK)', menge: '350 g' },
+      { name: 'Zucker', menge: '60 g' },
+      { name: 'Zitronensaft', menge: '2 EL' },
+      { name: 'Wasser', menge: '60 ml' },
+    ],
+    schritte: [
+      'Erdbeeren waschen und entstielen (TK-Erdbeeren auftauen lassen).',
+      'Alle Zutaten mit einem Mixer pürieren bis eine glatte Masse entsteht.',
+      'Durch ein feines Sieb streichen um Kerne zu entfernen (optional).',
+      'In den Behälter füllen und 24 h einfrieren.',
+      'Programm "Sorbet" starten.',
+    ],
+    tipp: 'Einen Schuss Roséwein oder Himbeersirup hinzufügen für eine besondere Note.',
+  },
+  {
+    id: 3,
+    name: 'Protein-Schoko-Eis',
+    sub: 'High Protein, Low Guilt',
+    emoji: '💪',
+    tags: ['eis', 'protein'],
+    tagLabels: [{ label: 'Protein', cls: 'orange' }, { label: 'Low Fat', cls: 'green' }],
+    time: '5 Min',
+    gefrier: '24 h',
+    portionen: '1–2',
+    zutaten: [
+      { name: 'Magerquark', menge: '200 g' },
+      { name: 'Magermilch', menge: '120 ml' },
+      { name: 'Schokoladen-Proteinpulver', menge: '30 g (1 Scoop)' },
+      { name: 'Kakaopulver', menge: '1 EL' },
+      { name: 'Honig oder Stevia', menge: 'nach Geschmack' },
+    ],
+    schritte: [
+      'Quark, Milch und Proteinpulver glatt rühren.',
+      'Kakaopulver und Süßungsmittel einmischen.',
+      'In den Behälter füllen und 24 h einfrieren.',
+      'Programm "Lite Ice Cream" starten.',
+      'Optional: Re-Spin für cremigere Konsistenz.',
+    ],
+    tipp: 'Wer es süßer mag: 1 EL Erdnussbutter einrühren — wird zum Peanut Butter Cup Eis!',
+  },
+  {
+    id: 4,
+    name: 'Bananen Nice Cream',
+    sub: 'Nur 1 Zutat — natürlich & vegan',
+    emoji: '🍌',
+    tags: ['sorbet', 'vegan', 'protein'],
+    tagLabels: [{ label: 'Vegan', cls: 'green' }, { label: 'Nur 1 Zutat', cls: 'yellow' }],
+    time: '5 Min',
+    gefrier: '24 h',
+    portionen: '1–2',
+    zutaten: [
+      { name: 'Reife Bananen', menge: '3–4 Stück' },
+    ],
+    schritte: [
+      'Bananen schälen und in Scheiben schneiden.',
+      'Bananenstücke auf einem Tablett verteilt einfrieren (mind. 4 h).',
+      'Gefrorene Bananenstücke in den Behälter geben und 24 h tiefkühlen.',
+      'Programm "Sorbet" oder "Lite Ice Cream" starten.',
+    ],
+    tipp: 'Variante: gefrorene Banane mit 1 EL Kakao → Schoko-Banana. Mit TK-Mango → tropisches Mango-Banana-Sorbet.',
+  },
+  {
+    id: 5,
+    name: 'Cookies & Cream',
+    sub: 'Der Klassiker aus der Eisdiele',
+    emoji: '🍪',
+    tags: ['eis'],
+    tagLabels: [{ label: 'Beliebt', cls: 'pink' }],
+    time: '10 Min',
+    gefrier: '24 h',
+    portionen: '2–3',
+    zutaten: [
+      { name: 'Vollmilch', menge: '240 ml' },
+      { name: 'Sahne', menge: '120 ml' },
+      { name: 'Zucker', menge: '70 g' },
+      { name: 'Vanillezucker', menge: '1 Päckchen' },
+      { name: 'Oreo-Kekse (grob zerbrochen)', menge: '6–8 Stück' },
+    ],
+    schritte: [
+      'Milch, Sahne, Zucker und Vanillezucker verrühren.',
+      'Nur die Basismischung (ohne Kekse) in den Behälter füllen und einfrieren.',
+      'Nach dem Verarbeiten mit "Ice Cream" eine Mulde in die Mitte drücken.',
+      'Zerbrochene Oreos hineinlegen und "Mix-In" Programm starten.',
+    ],
+    tipp: 'Die Kekse erst nach dem ersten Durchlauf hinzufügen — so bleiben sie knackig!',
+  },
+  {
+    id: 6,
+    name: 'Mango-Kokos-Sorbet',
+    sub: 'Tropisch & cremig vegan',
+    emoji: '🥭',
+    tags: ['sorbet', 'vegan'],
+    tagLabels: [{ label: 'Vegan', cls: 'green' }, { label: 'Tropical', cls: 'yellow' }],
+    time: '10 Min',
+    gefrier: '24 h',
+    portionen: '2',
+    zutaten: [
+      { name: 'TK-Mango', menge: '300 g' },
+      { name: 'Kokosmilch (Dose, vollfett)', menge: '160 ml' },
+      { name: 'Limettensaft', menge: '2 EL' },
+      { name: 'Zucker oder Agavensirup', menge: '2 EL' },
+    ],
+    schritte: [
+      'TK-Mango und Kokosmilch 10 Minuten antauen lassen.',
+      'Mit Limettensaft und Zucker pürieren.',
+      'In den Behälter füllen und 24 h einfrieren.',
+      'Programm "Sorbet" starten.',
+    ],
+    tipp: 'Eine Prise Chili oder frischer Ingwer macht das Sorbet besonders interessant.',
+  },
+];
+
+// ── Render ──
+function renderCards(filter) {
+  const grid = document.getElementById('recipeGrid');
+  const filtered = filter === 'alle' ? RECIPES : RECIPES.filter(r => r.tags.includes(filter));
+  grid.innerHTML = filtered.map(r => `
+    <div class="recipe-card" data-id="${r.id}">
+      <div class="recipe-emoji">${r.emoji}</div>
+      <div class="recipe-body">
+        <div class="recipe-name">${r.name}</div>
+        <div class="recipe-sub">${r.sub}</div>
+        <div class="recipe-tags">${r.tagLabels.map(t => `<span class="tag ${t.cls}">${t.label}</span>`).join('')}</div>
+        <div class="recipe-meta">
+          <span>⏱ ${r.time} Vorbereitung</span>
+          <span>❄️ ${r.gefrier} einfrieren</span>
+          <span>🍽 ${r.portionen} Port.</span>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  grid.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => openModal(parseInt(card.dataset.id)));
+  });
+}
+
+// ── Filter ──
+document.getElementById('filterRow').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderCards(btn.dataset.filter);
+});
+
+// ── Modal ──
+function openModal(id) {
+  const r = RECIPES.find(x => x.id === id);
+  if (!r) return;
+  document.getElementById('modalEmoji').textContent = r.emoji;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-title">${r.name}</div>
+    <div class="modal-sub">${r.sub} &mdash; ${r.portionen} Portionen &mdash; ⏱ ${r.time} + ❄️ ${r.gefrier}</div>
+    <div class="modal-section">
+      <h3>Zutaten</h3>
+      <ul class="ingredients">
+        ${r.zutaten.map(z => `<li><span>${z.name}</span><span class="amount">${z.menge}</span></li>`).join('')}
+      </ul>
+    </div>
+    <div class="modal-section">
+      <h3>Zubereitung</h3>
+      <ol class="steps">
+        ${r.schritte.map(s => `<li>${s}</li>`).join('')}
+      </ol>
+    </div>
+    <div class="tip-box">💡 ${r.tipp}</div>
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+document.getElementById('modalClose').addEventListener('click', () => document.getElementById('modalOverlay').classList.remove('open'));
+document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+renderCards('alle');
+</script>
+</body>
+</html>
